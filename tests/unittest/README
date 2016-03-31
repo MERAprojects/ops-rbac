@@ -1,0 +1,146 @@
+To run the rbac unit tests, you will need to copy three files down to the
+target and run the tests manually. Two of the files reside in this
+directory and the third can be found in "ops-rbac/build/tests/unittest".
+
+run_rbac_ut - This file creates/deletes user accounts and then calls
+              the shared and python rbac libraries.
+
+rbac_ut.py - This script the tests the rbac python library.
+
+rbac_ut.cpp - Contains the gtest code to test the shared library.
+
+rbac_ut - The executible that tests the rbac shared library.
+
+
+First, copy these three files down to the target.
+
+   scp run_rbac_ut admin@<targetip>:/home/admin/
+   scp rbac_ut.py admin@<targetip>:/home/admin/
+   scp rbac_ut admin@<targetip>:/home/admin/
+
+
+Login into the target as "admin" and run "./run_rbac_ut"
+
+The tests will take about a minutes to run and you should see the following.
+
+
+switch:~$ ./run_rbac_ut
+---Creating user account  rbactest_admin
+---Creating user account  rbactest_netop
+---Creating user account  rbactest_generic
+---Creating user account  rbactest_both
+rbac_ut Test Harness for shared libraries[==========] Running 23 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 23 tests from rbac_ut
+[ RUN      ] rbac_ut.rbac_get_user_role_multiple_users
+[       OK ] rbac_ut.rbac_get_user_role_multiple_users (1 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_root
+[       OK ] rbac_ut.rbac_check_user_permission_user_root (1 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_builtin_admin
+[       OK ] rbac_ut.rbac_check_user_permission_builtin_admin (0 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_builtin_netop
+[       OK ] rbac_ut.rbac_check_user_permission_builtin_netop (1 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_ops_admin
+[       OK ] rbac_ut.rbac_check_user_permission_user_ops_admin (1 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_ops_netop
+[       OK ] rbac_ut.rbac_check_user_permission_user_ops_netop (1 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_generic
+[       OK ] rbac_ut.rbac_check_user_permission_user_generic (0 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_bogus
+[       OK ] rbac_ut.rbac_check_user_permission_user_bogus (0 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_blank
+[       OK ] rbac_ut.rbac_check_user_permission_user_blank (1 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_null
+[       OK ] rbac_ut.rbac_check_user_permission_user_null (0 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_user_multiple_roles
+[       OK ] rbac_ut.rbac_check_user_permission_user_multiple_roles (0 ms)
+[ RUN      ] rbac_ut.rbac_check_user_permission_partial_user_names
+[       OK ] rbac_ut.rbac_check_user_permission_partial_user_names (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_root
+[       OK ] rbac_ut.rbac_get_user_permissions_user_root (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_builtin_admin
+[       OK ] rbac_ut.rbac_get_user_permissions_user_builtin_admin (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_builtin_netop
+[       OK ] rbac_ut.rbac_get_user_permissions_user_builtin_netop (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_ops_admin
+[       OK ] rbac_ut.rbac_get_user_permissions_user_ops_admin (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_ops_netop
+[       OK ] rbac_ut.rbac_get_user_permissions_user_ops_netop (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_generic
+[       OK ] rbac_ut.rbac_get_user_permissions_user_generic (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_bogus
+[       OK ] rbac_ut.rbac_get_user_permissions_user_bogus (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_blank
+[       OK ] rbac_ut.rbac_get_user_permissions_user_blank (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_null
+[       OK ] rbac_ut.rbac_get_user_permissions_user_null (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_user_multiple_roles
+[       OK ] rbac_ut.rbac_get_user_permissions_user_multiple_roles (0 ms)
+[ RUN      ] rbac_ut.rbac_get_user_permissions_partial_user_name
+[       OK ] rbac_ut.rbac_get_user_permissions_partial_user_name (0 ms)
+[----------] 23 tests from rbac_ut (9 ms total)
+
+[----------] Global test environment tear-down
+[==========] 23 tests from 1 test case ran. (9 ms total)
+[  PASSED  ] 23 tests.
+
+
+
+
+rbac_ut Test Harness for python libraries
+[==========]
+[----------]
+[----------]
+Running rbac.check_user_permissions() tests
+[ RUN      ]  rbac_get_user_role_multiple_users
+[      OK  ]  rbac_get_user_role_multiple_users
+[ RUN      ]  rbac_check_user_permission_root
+[      OK  ]  rbac_check_user_permission_root
+[ RUN      ]  rbac_check_user_permission_builtin_admin
+[      OK  ]  rbac_check_user_permission_builtin_admin
+[ RUN      ]  rbac_check_user_permission_builtin_netop
+[      OK  ]  rbac_check_user_permission_builtin_netop
+[ RUN      ]  rbac_check_user_permission_user_ops_admin
+[      OK  ]  rbac_check_user_permission_user_ops_admin
+[ RUN      ]  rbac_check_user_permission_user_ops_netop
+[      OK  ]  rbac_check_user_permission_user_ops_netop
+[ RUN      ]  rbac_check_user_permission_user_generic
+[      OK  ]  rbac_check_user_permission_user_generic
+[ RUN      ]  rbac_check_user_permission_user_bogus
+[      OK  ]  rbac_check_user_permission_user_bogus
+[ RUN      ]  rbac_check_user_permission_user_blank
+[      OK  ]  rbac_check_user_permission_user_blank
+[ RUN      ]  rbac_check_user_permission_user_multiple_roles
+[      OK  ]  rbac_check_user_permission_user_multiple_roles
+[ RUN      ]  rbac_check_user_permission_partial_user_name
+[      OK  ]  rbac_check_user_permission_partial_user_name
+[ RUN      ]  rbac_get_user_permissions_user_root
+[      OK  ]  rbac_get_user_permissions_user_root
+[ RUN      ]  rbac_get_user_permissions_user_builtin_admin
+[      OK  ]  rbac_get_user_permissions_user_builtin_admin
+[ RUN      ]  rbac_get_user_permissions_user_builtin_netop
+[      OK  ]  rbac_get_user_permissions_user_builtin_netop
+[ RUN      ]  rbac_get_user_permissions_user_ops_admin
+[      OK  ]  rbac_get_user_permissions_user_ops_admin
+[ RUN      ]  rbac_get_user_permissions_user_ops_netop
+[      OK  ]  rbac_get_user_permissions_user_ops_netop
+[ RUN      ]  rbac_get_user_permissions_user_generic
+[      OK  ]  rbac_get_user_permissions_user generic
+[ RUN      ]  rbac_get_user_permissions_user_bogus
+[      OK  ]  rbac_get_user_permissions_user bogus
+[ RUN      ]  rbac_get_user_permissions_user_blank
+[      OK  ]  rbac_get_user_permissions_user_blank
+[ RUN      ]  rbac_get_user_permissions_user_multiple_roles
+[      OK  ]  rbac_get_user_permissions_user_mulitple_roles
+[ RUN      ]  rbac_get_user_permissions_partial_user_names
+[      OK  ]  rbac_get_user_permissions_partial_user_names
+[----------]  21 from rbac_ut
+
+[==========]  21 from rbac_ut
+[  PASSED  ]  21
+
+
+---Deleting user account  rbactest_admin
+---Deleting user account  rbactest_netop
+---Deleting user account  rbactest_generic
+---Deleting user account  rbactest_both
