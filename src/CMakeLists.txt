@@ -21,12 +21,21 @@ set (INCL_DIR ${CMAKE_SOURCE_DIR}/include)
 # libraries source files
 set (SOURCES ${PROJECT_SOURCE_DIR}/rbac.c)
 
+# Remove comment in next line to build rbac_role
+#set (TEST_SOURCES ${PROJECT_SOURCE_DIR}/rbac_role.c)
+
 include_directories (${INCL_DIR} ${PROJECT_SOURCE_DIR})
 
 # Rules to build libaray
 add_library (${RBAC_LIB} SHARED ${SOURCES})
 
+# Remove comment in next line to build rbac_role
+#add_executable(rbac_role ${TEST_SOURCES})
+
 target_link_libraries (${RBAC_LIB} -lpthread -lrt)
+
+# Remove comment in next line to build rbac_role
+#target_link_libraries (rbac_role rbac)
 
 # Define compile flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wall -Werror")
@@ -44,5 +53,8 @@ install(TARGETS ${RBAC_LIB}
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
        )
+
+# Remove comment in next line to build rbac_role
+#install(TARGETS rbac_role RUNTIME DESTINATION bin)
 
 install(FILES ${INCL_DIR}/rbac.h DESTINATION include)
