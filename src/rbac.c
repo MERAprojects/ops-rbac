@@ -25,7 +25,11 @@
 #include <unistd.h>
 #include <grp.h>
 #include <pwd.h>
+#include <errno.h>
 #include <rbac.h>
+#include "openvswitch/vlog.h"
+
+VLOG_DEFINE_THIS_MODULE(rbac);
 
 #define ALLOW_ROOT_ROLE
 
@@ -245,4 +249,186 @@ rbac_get_user_role(const char *username, rbac_role_t *role)
     }
     result = get_rbac_role(username, role);
     return(result);
+}
+
+/*
+ * Function       : rbac_is_remote_user_permitted
+ * Responsibility : Checks if at privilege level 'privilege',
+ *                  'resource' can be accessed or not.
+ * Parameters     : long privilege           - (0 to 15)
+ *                : resource_type_e resource - VTY_SH/ADMIN_CMDS
+ * Return         : 'true' if resource is permitted for the privilege
+ *                  level 'privilege' and 'false' if not.
+ */
+bool
+rbac_is_remote_user_permitted(long privilege, enum resource_type_e resource)
+{
+
+    switch (resource) {
+        case VTY_SH:
+            return ((privilege >= OPERATOR_LVL) &&
+                    (privilege <= NETOP_LVL)) ? true: false;
+        case ADMIN_CMDS:
+            return privilege == ADMIN_LVL ? true: false;
+        default:
+            return false;
+    }
+}
+
+/*
+ * Function       : rbac_is_local_user_permitted
+ * Responsibility : Checks if user 'username' has access to 'resource'
+ * Parameters     : char * username
+ *                : resource_type_e resource - VTY_SH/ADMIN_CMDS
+ * Return         : 'true' if user 'username' has access to 'resource'
+ *                  and 'false' if not.
+ */
+bool
+rbac_is_local_user_permitted(char * username, enum resource_type_e resource)
+{
+
+    switch(resource) {
+        case VTY_SH:
+            if (rbac_check_user_permission(username, RBAC_READ_SWITCH_CONFIG)
+                 || rbac_check_user_permission(username,
+                                               RBAC_WRITE_SWITCH_CONFIG)) {
+                return true;
+            }
+            break;
+        case ADMIN_CMDS:
+            if (rbac_check_user_permission(username, RBAC_SYS_MGMT)) {
+                return true;
+            }
+            break;
+    }
+    return false;
+}
+
+/*
+ * Function       : rbac_radius_to_switch_privilege
+ * Responsibility : Maps privilege level value from RADIUS
+ *                  to privilege level understood by the switch.
+ * RADIUS privilege level ADMINISTRATIVE (6) -> ADMIN_LVL    (15)
+ * RADIUS privilege level NAS_PROMPT     (7) -> OPERATOR_LVL (1)
+ * Parameters     : long privilege
+ * Return         : switch privilege level
+ */
+
+long
+rbac_radius_to_switch_privilege(long privilege)
+{
+    if (privilege == ADMINISTRATIVE) {
+        return ADMIN_LVL;
+    } else {
+        return OPERATOR_LVL;
+    }
+}
+
+/*
+ * Function       : rbac_get_remote_user_privilege
+ * Responsibility : Returns switch privilege level of remote user 'username'
+ *                  based on 'auth_mode' and 'privilege' set by RADIUS/TACACS.
+ * Parameters     : char * username
+ *                  const char *auth_mode: RADIUS/TACACS
+ *                  long privilege       : Privilege level set by RADIUS/TACACS
+ * Return         : switch privilege level
+ */
+long
+rbac_get_remote_user_privilege(char *username, const char * auth_mode,
+                               long privilege)
+{
+    /* RADIUS Authenticated user */
+    if (!strncmp(auth_mode, RADIUS, strlen(RADIUS))) {
+        long switch_priv = rbac_radius_to_switch_privilege(privilege);
+         VLOG_INFO("RADIUS authenticated user %s with privilege %ld\n",
+                    username, switch_priv);
+         return switch_priv;
+    /* TACACS Authenticated user */
+    } else {
+        VLOG_INFO("TACACS authenticated user %s with privilege %ld\n",
+                   username, privilege);
+        return privilege;
+    }
+}
+
+/*
+ * Function       : rbac_string_to_long
+ * Responsibility : Converts 'str' string to long and is stored in 'result'
+ * Parameters     : long * result    - holds the converted string
+ *                : const char * str - string to be converted to long
+ *                : int base         - base to use for the conversion
+ * Return         : 'true' on success and 'false' on failure
+ */
+bool
+rbac_string_to_long(long *result, const char * str, int base)
+{
+    char *end;
+    errno = 0;
+
+    *result = strtol(str, &end, base);
+
+    if ((errno == ERANGE && (*result == LONG_MAX || *result == LONG_MIN))
+        || (errno != 0 && *result == 0)) {
+        VLOG_ERR("Error while converting %s to long: Out of range\n",str);
+        return false;
+    }
+
+    if (end == str) {
+        VLOG_ERR("Error while converting %s to long: No digits were found\n",
+                  str);
+        return false;
+    }
+
+    if (*end != '\0') {
+        VLOG_ERR("Error while converting %s to long: "
+                 "Further characters after number %s \n",
+                  str, end);
+        return false;
+    }
+
+    VLOG_INFO("String %s was converted to %ld\n", str, *result);
+    return true;
+}
+
+/*
+ * Function       : rbac_is_user_permitted
+ * Responsibility : Checks if user 'username' has access to 'resource'
+ * Parameters     : char * username
+ *                : resource_type_e resource - VTYSH/ADMIN_CMDS
+ * Return         : 'true' if user 'username' has access to 'resource'
+ *                  and 'false' if not.
+ */
+
+bool
+rbac_is_user_permitted(char * username, enum resource_type_e resource)
+{
+    const char *auth_mode = getenv(AUTH_METHOD_ENV);
+
+    /* Use RBAC when AUTH_METHOD ENV is not set. Locally authenticated user */
+    if (auth_mode == NULL) {
+        VLOG_INFO("AUTH_METHOD ENV = NULL\n");
+        return rbac_is_local_user_permitted(username, resource);
+    } else {
+        /* Remote Authenticated user */
+        long privilege;
+        const char *priv_lvl = getenv(PRIV_LVL_ENV);
+
+        if (priv_lvl != NULL) {
+            VLOG_INFO("PRIV_LVL ENV = %s\n", getenv(PRIV_LVL_ENV));
+            if (rbac_string_to_long(&privilege, priv_lvl, BASE_10)) {
+                /* Get privilege level of remote RADIUS/TACACS user */
+                long priv = rbac_get_remote_user_privilege(username,
+                                                           auth_mode,
+                                                           privilege);
+                return rbac_is_remote_user_permitted(priv, resource);
+            } else {
+                VLOG_ERR("Conversion from %s to long failed for user %s\n",
+                      priv_lvl, username);
+                return false;
+            }
+        } else {
+            VLOG_INFO("Privilege level = NULL\n");
+            return false;
+        }
+    }
 }
