@@ -36,6 +36,12 @@
 #define RBAC_WRITE_SWITCH_CONFIG                "WRITE_SWITCH_CONFIG"
 #define RBAC_SYS_MGMT                           "SYS_MGMT"
 
+#define BASE_10                                 10
+#define RADIUS                                  "RADIUS"
+#define TACACS                                  "TACACS"
+#define PRIV_LVL_ENV                            "PRIV_LVL"
+#define AUTH_METHOD_ENV                         "AUTH_MODE"
+
 typedef struct {
   char name[RBAC_MAX_ROLE_NAME_LEN];
 } rbac_role_t;
@@ -45,12 +51,47 @@ typedef struct {
   char name[RBAC_MAX_NUM_PERMISSIONS][RBAC_MAX_PERMISSION_NAME_LEN];
 } rbac_permissions_t;
 
+enum resource_type_e {
+    VTY_SH,
+    ADMIN_CMDS
+};
+
+enum privilege_level_e {
+    PRIV_LVL_0,
+    OPERATOR_LVL,      /* Read-only role */
+    PRIV_LVL_2,        /* Placeholders for new roles */
+    PRIV_LVL_3,
+    PRIV_LVL_4,
+    PRIV_LVL_5,
+    PRIV_LVL_6,
+    PRIV_LVL_7,
+    PRIV_LVL_8,
+    PRIV_LVL_9,
+    PRIV_LVL_10,
+    PRIV_LVL_11,
+    PRIV_LVL_12,
+    PRIV_LVL_13,
+    NETOP_LVL,          /* Netop role */
+    ADMIN_LVL           /* Admin role */
+};
+
+enum radius_priv_lvl_e {
+    ADMINISTRATIVE = 6,  /* Access to privileged commands */
+    NAS_PROMPT           /* Access to non-privileged commands */
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 extern bool rbac_check_user_permission(const char *username, const char *permissions);
 extern bool rbac_get_user_permissions(const char *username, rbac_permissions_t *permissions);
 extern bool rbac_get_user_role(const char *username, rbac_role_t *role);
+extern bool rbac_is_remote_user_permitted(long privilege, enum resource_type_e);
+extern bool rbac_is_local_user_permitted(char * username, enum resource_type_e);
+extern long rbac_radius_to_switch_privilege(long privilege);
+extern long rbac_get_remote_user_privilege(char *username, const char * auth_mode, long privilege);
+extern bool rbac_is_user_permitted(char * username, enum resource_type_e);
+extern bool rbac_string_to_long(long *result, const char * str, int base);
 #ifdef __cplusplus
 }
 #endif

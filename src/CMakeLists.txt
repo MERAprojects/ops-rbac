@@ -24,7 +24,11 @@ set (SOURCES ${PROJECT_SOURCE_DIR}/rbac.c)
 # Remove comment in next line to build rbac_role
 #set (TEST_SOURCES ${PROJECT_SOURCE_DIR}/rbac_role.c)
 
-include_directories (${INCL_DIR} ${PROJECT_SOURCE_DIR})
+# Rules to locate needed libraries
+include(FindPkgConfig)
+pkg_check_modules(OVSCOMMON REQUIRED libovscommon)
+
+include_directories (${INCL_DIR} ${PROJECT_SOURCE_DIR} ${OVSCOMMON_INCLUDE_DIRS})
 
 # Rules to build libaray
 add_library (${RBAC_LIB} SHARED ${SOURCES})
@@ -32,7 +36,7 @@ add_library (${RBAC_LIB} SHARED ${SOURCES})
 # Remove comment in next line to build rbac_role
 #add_executable(rbac_role ${TEST_SOURCES})
 
-target_link_libraries (${RBAC_LIB} -lpthread -lrt)
+target_link_libraries (${RBAC_LIB} ${OVSCOMMON_LIBRARIES} -lpthread -lrt)
 
 # Remove comment in next line to build rbac_role
 #target_link_libraries (rbac_role rbac)
